@@ -3,6 +3,7 @@
 
 # my.new.folder = name for a new folder where picture files will be copied
 
+
 GoPro_ThinPictureFiles <- function(my.new.folder){
   
   # Select interactively the folder where the picutres are located
