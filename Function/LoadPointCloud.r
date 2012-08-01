@@ -12,6 +12,7 @@ if(Sys.info()['sysname']=="Windows"){
 if(Sys.info()['sysname']=="Darwin"){
 my.dir.orig <- tk_choose.dir(default = "/Users", caption = "Select the file directory")
 }
+if(is.na(my.dir.orig)){break}
 my.file.name <- dir(my.dir.orig)
 
 
