@@ -23,7 +23,7 @@ Point_Density <- function(data,dx,dy,Xlim,Ylim){
     m <- 1
     for(j in y.res){
       ind <- which((data[,1]>=i)&(data[,1]<(i+dx))&(data[,2]>=j)&(data[,2]<(j+dy)))
-      z.density[k,m] <- length(ind)/(dx*dy*10*10)
+      z.density[k,m] <- length(ind)/(dx*dy)
       m <- m+1
     } 
     k <- k+1
