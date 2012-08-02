@@ -1,9 +1,9 @@
+# Simon Filhol, 1st august 2012
+#
+
 Basic.statmap.ptcloud <- function(data,dx,dy,Xlim,Ylim){
 
-  
-  
-  
-# Initialize   
+# Initialize 
 x.res <- seq(from=Xlim[1],to=Xlim[2]-dx,by=dx)
 y.res <- seq(from=Ylim[1],to=Ylim[2]-dy,by=dy)
 z.density <- matrix(NA,nrow=length(x.res),ncol=length(y.res))
@@ -11,7 +11,7 @@ z.min <- matrix(NA,nrow=length(x.res),ncol=length(y.res))
 z.max <- matrix(NA,nrow=length(x.res),ncol=length(y.res))
 z.quantile <- array(NA,dim=c(length(x.res),length(y.res),3))
 
-
+# Loop to split data in pixels dx*dy and extract statistique parameters
 k <- 1
 for(i in x.res){
   m <- 1
@@ -26,8 +26,7 @@ for(i in x.res){
   k <- k+1
 }
 
-density <- list(x=x.res+dx/2,y=y.res+dy/2,z=z.density)
+All <- list(coords=rbind(x.res+dx/2,y.res+dy/2),density=z.density,min=z.min,max=z.max,quantiles=z.quantile)
 
-
-return()
+return(All)
 }
