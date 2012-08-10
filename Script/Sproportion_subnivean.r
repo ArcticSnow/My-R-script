@@ -1,3 +1,11 @@
+# Simon Filhol
+# 9 august 2012
+
+# please refer also to file Subnivean_dynamic.xlsx
+
+# these are data from the snowpit collected during winter 2011-2012 all across winter. they can be complemented 
+# by the data of the 3 long snowpit (Sprocess_subnivean.r)
+
 
 bot_8dec <- c(26,25,  11,19, 18,10,13, 18,10,0)
 top_8dec <- c(35.5,39,27.5,32, 29, 20, 24, 25.5, 24,    22)
