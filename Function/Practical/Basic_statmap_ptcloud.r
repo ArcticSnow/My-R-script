@@ -34,6 +34,7 @@ Basic.statmap.ptcloud <- function(data,dx,dy,Xlim,Ylim){
   z.std <- matrix(NA,nrow=length(x.res),ncol=length(y.res))
   z.quantile <- array(NA,dim=c(length(x.res),length(y.res),3))
   z.pt.loc.min <- matrix(NA,nrow=length(x.res)*length(y.res),ncol=3 )
+  z.pt.loc.max <- matrix(NA,nrow=length(x.res)*length(y.res),ncol=3 )
   
   # Loop to split data in pixels dx*dy and extract statistique parameters
   time <- Sys.time()
@@ -56,7 +57,11 @@ Basic.statmap.ptcloud <- function(data,dx,dy,Xlim,Ylim){
           z.std[k,m] <- sd(inter2,na.rm=T)
           z.quantile[k,m,] <- quantile(inter2,probs=c(0.025,0.5,0.975),na.rm=TRUE)
           inter3 <- inter1[inter1[ind2,3]==min(inter2,na.rm=T),]
+          inter4<- inter1[inter1[ind2,3]==max(inter2,na.rm=T),]
+          print(dim(inter3))
+          print(inter3[1:3,])
           z.pt.loc.min[k+m,] <- ifelse(dim(inter3)[1]==1,inter3,inter3[1,])
+          z.pt.loc.max[k+m,] <- ifelse(dim(inter4)[1]==1,inter4,inter4[1,])
         },{
           z.min[k,m] <- NA 
           z.density[k,m] <- NA
@@ -66,6 +71,7 @@ Basic.statmap.ptcloud <- function(data,dx,dy,Xlim,Ylim){
           z.std[k,m] <- NA
           z.quantile[k,m,] <- c(NA,NA,NA) 
           z.pt.loc.min[k+m,] <-c(NA,NA,NA) 
+          z.pt.loc.max[k+m,] <-c(NA,NA,NA) 
         })
         m <- m+1
       }
@@ -79,6 +85,7 @@ Basic.statmap.ptcloud <- function(data,dx,dy,Xlim,Ylim){
       z.std[k,] <- NA
       z.quantile[k,,] <- c(NA,NA,NA)
       z.pt.loc.min[k+m,] <-c(NA,NA,NA) 
+      z.pt.loc.max[k+m,] <-c(NA,NA,NA)
     })
     
     k <- k+1
@@ -95,6 +102,7 @@ All <- list(coords=rbind(x.res+dx/2,y.res+dy/2),
             Sd=z.std,
             Quantiles=z.quantile,
             Min.pt=z.pt.loc.min,
+            Max.pt=z.pt.loc.max,
             X=x.res,
             Y=y.res
             
