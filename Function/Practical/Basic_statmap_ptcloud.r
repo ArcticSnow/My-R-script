@@ -58,10 +58,8 @@ Basic.statmap.ptcloud <- function(data,dx,dy,Xlim,Ylim){
           z.quantile[k,m,] <- quantile(inter2,probs=c(0.025,0.5,0.975),na.rm=TRUE)
           inter3 <- inter1[inter1[ind2,3]==min(inter2,na.rm=T),]
           inter4<- inter1[inter1[ind2,3]==max(inter2,na.rm=T),]
-          print(dim(inter3))
-          print(inter3[1:3,])
-          z.pt.loc.min[k+m,] <- ifelse(dim(inter3)[1]==1,inter3,inter3[1,])
-          z.pt.loc.max[k+m,] <- ifelse(dim(inter4)[1]==1,inter4,inter4[1,])
+          z.pt.loc.min[k+m,1:3] <- ifelse(dim(inter3)[1]==1,inter3,inter3[1,1:3])
+          z.pt.loc.max[k+m,1:3] <- ifelse(dim(inter4)[1]==1,inter4,inter4[1,1:3])
         },{
           z.min[k,m] <- NA 
           z.density[k,m] <- NA
