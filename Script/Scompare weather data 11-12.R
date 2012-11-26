@@ -304,10 +304,10 @@ sfl <- data.frame(
 h <- ggplot()+
   geom_line(aes(x=Temp$time[Temp$Site=="SnowNet"],y=Temp$val[Temp$Site=="SnowNet"]),
             colour=ifelse(Temp$val[Temp$Site=="SnowNet"]>=0,"red","blue"))+
-  geom_point(aes(x=sfl$time,y=sfl$Fall/2+max(Temp$val+2,na.rm=T)),shape='*',size=(sfl$Fall)*7,
+  geom_point(aes(x=sfl$time,y=sfl$Fall/2+min(Temp$val-4,na.rm=T)),shape='*',size=(sfl$Fall)*7,
              colour=ifelse(sfl$Fall>=0,"blue","red"))+
   ylab("Temperature (°C)")+
-  xlab("Time")
+  theme(axis.title.x = element_blank())
  
 w <- ggplot()+
   geom_line(aes(x=Wind$time[Wind$Site=="LiDAR"],y=Wind$val[Wind$Site=="LiDAR"]))+
@@ -316,20 +316,20 @@ w <- ggplot()+
   xlab("Time")
 
 p01 <- qplot(time,val*100,data=S.D,colour=Site,geom="line",
-             xlab="Time",ylab="Snow Depth (cm)")+
-  theme(legend.justification=c(1,0), legend.position=c(1,0.5))
-
-multiplot(h,p01,w,cols=1)
-
-diffe <- diff(S.D$val[S.D$Site=="SnowNet"],lag=96)
-diffe <- c(rep(0,times=length(S.D$time[S.D$Site=="SnowNet"])-length(diffe)),diffe)
-Diff <- data.frame(
-  val=diffe,
-  time=S.D$time[S.D$Site=="SnowNet"])
-d <- ggplot()+
-  geom_line(aes(x=Diff$time,y=Diff$val) ,colour=ifelse(Diff$val>0,"blue","red"))+
-  geom_point(aes(x=sfl$time,y=-sfl$Fall/10-0.1,na.rm=T),
-shape='*',
-size=(sfl$Fall)*7,
-colour=ifelse(sfl$Fall>=0,"blue","red"))
-multiplot(d,p01,h)
+            ylab="Snow Depth (cm)")+
+  theme(legend.justification=c(1,0), legend.position=c(1,0.5),axis.title.x = element_blank())
+png(file="Met.png",width=10,height=8,units="in",res=500)
+multiplot(p01,h,w,cols=1)
+dev.off()
+# diffe <- diff(S.D$val[S.D$Site=="SnowNet"],lag=96)
+# diffe <- c(rep(0,times=length(S.D$time[S.D$Site=="SnowNet"])-length(diffe)),diffe)
+# Diff <- data.frame(
+#   val=diffe,
+#   time=S.D$time[S.D$Site=="SnowNet"])
+# d <- ggplot()+
+#   geom_line(aes(x=Diff$time,y=Diff$val) ,colour=ifelse(Diff$val>0,"blue","red"))+
+#   geom_point(aes(x=sfl$time,y=-sfl$Fall/10-0.1,na.rm=T),
+# shape='*',
+# size=(sfl$Fall)*7,
+# colour=ifelse(sfl$Fall>=0,"blue","red"))
+# multiplot(d,p01,h)

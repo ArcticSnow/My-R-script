@@ -12,11 +12,11 @@ ifelse({Sys.info()['sysname']=="Windows"},{
   source("C:/Documents and Settings/sfilhol/My Documents/GitHub/My-R-script/Function/Practical/LoadPointCloud.r")
   source("C:/Documents and Settings/sfilhol/My Documents/GitHub/My-R-script/Function/Practical/Multiplot.r")
 },{
-setwd("/Volumes/SNOW BLUE/PhD/Research/SnowNet/Glenn Creek/Winter 11_12/Lidar Survey/UTM all/subselection_2")
-# source()
-# source()
-# source()
-# source()
+setwd("/Volumes/SNOW BLUE/PhD/Research/SnowNet/Glenn Creek/Winter 11_12/Lidar Survey/UTM all/subselection_2/Clean")
+ source("/Users/simonfilhol/github/local/My_R_script/Function/Practical/Basic_statmap_ptcloud.r")
+ source("/Users/simonfilhol/github/local/My_R_script/Function/Practical/LoadPointCloud.r")
+ source("/Users/simonfilhol/github/local/My_R_script/Function/Practical/Multiplot.R")
+ source("/Users/simonfilhol/github/local/My_R_script/Function/FitPlane.R")
 })
 
 Data.prepare <- function(my.data,xlim,ylim,dx,dy,return.xyz){
@@ -208,35 +208,38 @@ image.plot(ground,zlim=c(-.5,.5),main='Ground Residual',cex.lab=1.1)
 contour(ground,add=T)
 
 # Plot tranch of pointcloud ====
-win.xlim <- c(471096-A.trans[1],471099-A.trans[1])
-win.ylim <- c(7203047.8-A.trans[2],7203047.9-A.trans[2])
+win1.xlim <- c(471096-A.trans[1],471099-A.trans[1])
+win1.ylim <- c(7203047.8-A.trans[2],7203047.9-A.trans[2])
+win1 <- PtCl_RecTrunc(A,B,C,D,E,FF,G,H,xlim=win1.xlim,ylim=win1.ylim)
+win2.xlim <- c(471094-A.trans[1],471096.5-A.trans[1])
+win2.ylim <- c(7203050.7-A.trans[2],7203050.75-A.trans[2])
+win2 <- PtCl_RecTrunc(A,B,C,D,E,FF,G,H,xlim=win2.xlim,ylim=win2.ylim)
 
-win.xyz.A <- A$xyz[A$xyz[,1]>win.xlim[1] & A$xyz[,1]<win.xlim[2],] 
-win.xyz.A <- win.xyz.A[win.xyz.A[,2]>win.ylim[1] & win.xyz.A[,2]<win.ylim[2],]
+w1 <- qplot(win1$x,win1$z,colour=win1$Date,alpha=I(.8),size = I(2),geom="point",
+           asp=(max(win1$z) -min(win1$z)))/(win1.xlim[2]-win1.xlim[1]),xlim=c(win1.xlim[1]-.1,win1.xlim[2]+.1),ylim=c(-0.25,1.25),
+           xlab="Distance (m)",ylab="Elevation (m)",
+           main="Slice 10 cm Thick From Original Point Cloud")+scale_colour_discrete(name = "Scanning Date")+ 
+  scale_x_continuous(breaks = round(seq(min(win1$x), max(win1$x), by = 0.2),1)) +
+  scale_y_continuous(breaks = round(seq(min(win1$z), max(win1$z), by = 0.2),1))
+w2 <- qplot(win2$x,win2$z,colour=win2$Date,alpha=I(0.8),size = I(2),geom="point",
+            asp=((max(win2$z) -min(win2$z)))/(win2.xlim[2]-win2.xlim[1]),
+           xlim=c(win2.xlim[1]-.1,win2.xlim[2]+.1),ylim=c(-0.25,3),
+           xlab="Distance (m)",ylab="Elevation (m)",
+           main="Slice 5 cm Thick From Original Point Cloud")+scale_colour_discrete(name = "Scanning Date")+ 
+  scale_x_continuous(breaks = round(seq(min(win2$x), max(win2$x), by = 0.2),1)) +
+  scale_y_continuous(breaks = round(seq(min(win2$z), max(win2$z), by = 0.2),1))+ theme(legend.position = "none")
 
- 
-win.xyz.G <- G$xyz[G$xyz[,1]>win.xlim[1] & G$xyz[,1]<win.xlim[2],] 
-win.xyz.G <- win.xyz.G[win.xyz.G[,2]>win.ylim[1] & win.xyz.G[,2]<win.ylim[2],]
+ggsave("Tranch_2.pdf",plot=w1,scale=1)
+ggsave("Tranch_3.pdf",plot=w2,scale=1)
 
-win.xyz.H <- H$xyz[H$xyz[,1]>win.xlim[1] & H$xyz[,1]<win.xlim[2],] 
-win.xyz.H <-  win.xyz.H[win.xyz.H[,2]>win.ylim[1] & win.xyz.H[,2]<win.ylim[2],]
+pdf(file="Tranch_1%3d.pdf")
+par(mfrow=c(1,1),oma = c( 1, 1, 1,1 ),mar=c(1.5,1.5,1.5,1.5))
+print(w1)
+print(w2)
+dev.off()
 
-
-
-
-
-win <- data.frame(
-  Date=as.factor(c(rep("23 Sept",times=dim(win.xyz.A)[1]),
-                   rep("8 Mars",times=dim(win.xyz.G)[1]),
-                   rep('26 Mars',times=dim(win.xyz.H)[1]))),
-  x=c(win.xyz.A[,1],win.xyz.G[,1],win.xyz.H[,1]),
-  z=c(win.xyz.A[,3],win.xyz.G[,3],win.xyz.H[,3]))
-
-qplot(win$x,win$z,colour=win$Date,alpha=I(1/4),size = I(4),
-      asp=1.5/3.2,xlim=c(win.xlim[1]-.1,win.xlim[2]+.1),ylim=c(-0.25,1.25))
-
-qplot(win.xyz[,1],win.xyz[,3],alpha=I(1/10),size = I(5))
-
+h2 <- ggplot()+geom_point(aes(x=win$x[win$Date=="23 Sept"],y=win$z[win$Date=="23 Sept"]),colour=win$Date[win$Date=="23 Sept"])
+h2 <- h2+geom_smooth(win$z[win$Date=="26 Mars"]~win$x[win$Date=="26 Mars"])
 #TEST ZONE: =====
 
 # 
