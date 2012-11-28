@@ -130,22 +130,22 @@ Lid.time.com <- Lid.time[Lid.ind]
 
 
 S.D <- data.frame(
-  Site = as.factor(c( rep( "SnowNet",length.out=length(Net.time[!is.na(Net.SD)]) ),
-                      rep("LiDAR",length.out=length(Lid.time[!is.na(Lid.SD)]) )  )) ,
+  Site = as.factor(c( rep( "Spruce/birch forest site",length.out=length(Net.time[!is.na(Net.SD)]) ),
+                      rep("Open shrubs site",length.out=length(Lid.time[!is.na(Lid.SD)]) )  )) ,
   time = c(Net.time[!is.na(Net.SD)],Lid.time[!is.na(Lid.SD)]),
   val=c(Net.SD[!is.na(Net.SD)],Lid.SD[!is.na(Lid.SD)])
   )
  
 Temp <- data.frame(
-  Site = as.factor(c( rep( "SnowNet",length.out=length(Net.time[!is.na(Net.Temp)]) ),
-                      rep("LiDAR",length.out=length(Lid.time[!is.na(Lid.Temp)]) )  )) ,
+  Site = as.factor(c( rep( "Spruce/birch forest site",length.out=length(Net.time[!is.na(Net.Temp)]) ),
+                      rep("Open shrubs site",length.out=length(Lid.time[!is.na(Lid.Temp)]) )  )) ,
   time = c(Net.time[!is.na(Net.Temp)],Lid.time[!is.na(Lid.Temp)]),
   val=c(Net.Temp[!is.na(Net.Temp)],Lid.Temp[!is.na(Lid.Temp)])
 )
 
 Wind <- data.frame(
-  Site = as.factor(c( rep( "SnowNet",length.out=length(Net.max.wind.xts) ),
-                      rep("LiDAR",length.out=length(Lid.max.wind.xts) ) ) ) ,
+  Site = as.factor(c( rep( "Spruce/birch forest site",length.out=length(Net.max.wind.xts) ),
+                      rep("Open shrubs site",length.out=length(Lid.max.wind.xts) ) ) ) ,
   time=c(index(Net.max.wind.xts),index(Lid.max.wind.xts)),
   val=c(as.vector(Net.max.wind.xts),as.vector(Lid.max.wind.xts))
 )
@@ -168,9 +168,9 @@ p3 <- qplot(Lid.RH[(Lid.ind)],Net.RH[(Net.ind)],geom=c("point","smooth"),method=
 multiplot(p1,p2,p3,cols=1)
 
 p4 <-  qplot(Lid.time,Lid.SD,geom=c("point"),
-            xlab='Time',ylab='Snow Depth (cm)',main="At the LiDAR Site") 
+            xlab='Time',ylab='Snow Depth (cm)',main="In shrubs") 
 p5 <- qplot(Net.time,Net.SD,geom=c("point"),
-      xlab='Time',ylab='Snow Depth (cm)', main="At the SnowNet site") 
+      xlab='Time',ylab='Snow Depth (cm)', main="In the forest") 
 multiplot(p4,p5,cols=1)
 
 #""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -301,23 +301,28 @@ sfl <- data.frame(
   Fall=sfl.fall
   )
 
+LiDAR.time <- data.frame(time=strptime(c("09/23/11","10/23/11","11/11/11","12/20/11",
+                         "01/11/12","02/15/12","03/08/12","03/26/12"),
+                       tz="",format="%m/%d/%y"))
+
 h <- ggplot()+
-  geom_line(aes(x=Temp$time[Temp$Site=="SnowNet"],y=Temp$val[Temp$Site=="SnowNet"]),
-            colour=ifelse(Temp$val[Temp$Site=="SnowNet"]>=0,"red","blue"))+
-  geom_point(aes(x=sfl$time,y=sfl$Fall/2+min(Temp$val-4,na.rm=T)),shape='*',size=(sfl$Fall)*7,
+  geom_line(aes(x=Temp$time[Temp$Site=="Spruce/birch forest site"],y=Temp$val[Temp$Site=="Spruce/birch forest site"]),
+            colour=ifelse(Temp$val[Temp$Site=="Spruce/birch forest site"]>=0,"red","blue"))+
+  geom_point(aes(x=sfl$time,y=sfl$Fall/2+max(Temp$val+2,na.rm=T)),shape='*',size=(sfl$Fall)*7,
              colour=ifelse(sfl$Fall>=0,"blue","red"))+
   ylab("Temperature (°C)")+
   theme(axis.title.x = element_blank())
  
 w <- ggplot()+
-  geom_line(aes(x=Wind$time[Wind$Site=="LiDAR"],y=Wind$val[Wind$Site=="LiDAR"]))+
-  geom_point(aes(x=sfl$time,y=-sfl$Loading/2+max(Wind$val+2,na.rm=T)),shape=17,size=(sfl$Loading*1.1))+
+  geom_line(aes(x=Wind$time[Wind$Site=="Open shrubs site"],y=Wind$val[Wind$Site=="Open shrubs site"]))+
   ylab("Wind Speed (m/s)")+
-  xlab("Time")
+  xlab("Time")+ scale_y_continuous(limits=c(-1.5, 12))+
+  geom_segment(aes(x=sfl$time,y=(sfl$Loading/6)-(sfl$Loading/6),yend=(sfl$Loading/6),xend=sfl$time),size=I(2))
 
 p01 <- qplot(time,val*100,data=S.D,colour=Site,geom="line",
             ylab="Snow Depth (cm)")+
-  theme(legend.justification=c(1,0), legend.position=c(1,0.5),axis.title.x = element_blank())
+  theme(legend.justification=c(0,0), legend.position=c(0,0.5),axis.title.x = element_blank())+
+  geom_vline(aes(xintercept=as.numeric(time)),data=LiDAR.time,linetype = "dotted", labels="LiDAR scanning")
 png(file="Met.png",width=10,height=8,units="in",res=500)
 multiplot(p01,h,w,cols=1)
 dev.off()
@@ -333,3 +338,9 @@ dev.off()
 # size=(sfl$Fall)*7,
 # colour=ifelse(sfl$Fall>=0,"blue","red"))
 # multiplot(d,p01,h)
+
+ggplot()+
+  geom_line(aes(x=Wind$time[Wind$Site=="Open shrubs site"],y=Wind$val[Wind$Site=="Open shrubs site"]))+
+  geom_bar(aes(x=sfl$time,y=-sfl$Loading/2-min(Wind$val,na.rm=T)))+
+  ylab("Wind Speed (m/s)")+
+  xlab("Time")+ scale_y_continuous(limits=c(-1.5, 12))
