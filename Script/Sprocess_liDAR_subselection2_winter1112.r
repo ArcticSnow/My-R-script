@@ -92,7 +92,7 @@ G <- Data.prepare(my.data,xlim,ylim,dx,dy,return.xyz=T)
 G.stat <- G$Stat
 G.trans <- G$Trans
 
-# Load data for the 11 Jan (H.):
+# Load data for the 26 Mar (H.):
 my.data <- LoadPointCloud(Trans=A.trans)
 H <- Data.prepare(my.data,xlim,ylim,dx,dy,return.xyz=T)
 H.stat <- H$Stat
@@ -105,25 +105,19 @@ H.trans <- H$Trans
 H.points <- H.stat$Density*dx*dy
 A.points <- A.stat$Density*dx*dy
 Snow.depth <- H.stat$Min-A.stat$Min
-Snow.depth[H.points<10 | A.points<100] <- NA
-image(Snow.depth,zlim=c(0,1))
-contour(Snow.depth,add=T)
+Snow.depth[H.points<10 | A.points<20] <- NA
 
-plot(Snow.depth,A.points)
-
-
+# Detrend ground surface
 A.dim <- dim(A.stat$Min)
 A <- data.frame(
  x=rep(A.stat$X,each=length(A.stat$X)),
  y=rep(A.stat$Y,A.dim[2]/length(A.stat$Y)),
  Min=as.vector(A.stat$Min))
-
 Bs <- FitPlane(cbind(A$x[!is.na(A$Min)],A$y[!is.na(A$Min)],A$Min[!is.na(A$Min)]))
 library(pracma)
 ground <- -(A$x*Bs[1]+A$y*Bs[2]+Bs[4]+A$Min*Bs[3])
 ground <- Reshape(ground,length(A.stat$X),length(A.stat$Y))
 
-plot(ground,Snow.depth)
 
 # Plot difference of maximum values
 AB.max <- B.stat$Max-A.stat$Max
@@ -189,10 +183,33 @@ for(i in 1:7){
   image.plot(my.snowdepth[,,i],zlim=my.zlim,main=paste('Snowdepth ',as.character(i)))
   contour(my.snowdepth[,,i],add=T,levels = pretty(my.zlim, 10))
   hist(as.vector(my.snowdepth[,,i]),200)
-  plot(my.snowdepth[,,i],Veg.thik,ylim=my.zlim,xlim=my.zlim)
+  plot(my.snowdepth[,,i],ground)
   image.plot(Veg.thik,zlim=c(0,2),main='Veg thickness',cex.lab=1.1)
   contour(Veg.thik,add=T)
 }
+
+my.zlim=c(-0.4,0.4)
+for(i in 1:7){  
+  par(mfrow=c(2,1),oma = c( 1, 1, 1,1 ),mar=c(1.5,1.5,1.5,1.5))
+  image.plot(my.min[,,i],zlim=my.zlim,main=paste('Snow accumulation ',as.character(i)))
+  contour(my.min[,,i],add=T,levels = pretty(my.zlim, 10))
+  plot(my.min[,,i],ground)
+  #image.plot(Veg.thik,zlim=c(0,2),main='Veg thickness',cex.lab=1.1)
+  #contour(Veg.thik,add=T)
+}
+
+par(mfrow=c(3,3),oma = c( 1, 1, 1,1 ),mar=c(1.5,1.5,1.5,1.5))
+for(i in 1:7){  
+  my.zlim=c(mean(as.vector(my.min[,,i]), na.rm=TRUE)-2*sd(as.vector(my.min[,,i]), na.rm=TRUE),
+            mean(as.vector(my.min[,,i]), na.rm=TRUE)+2*sd(as.vector(my.min[,,i]), na.rm=TRUE))
+  image.plot(my.min[,,i],zlim=my.zlim,main=paste('Snow accumulation ',as.character(i)))
+  #contour(my.min[,,i],add=T,levels = pretty(-1:1, n=20))
+}
+image.plot(Veg.thik,main='Vegetation Thickness ')
+image.plot(ground,main='Ground ')
+
+par(mfrow=c(1,1),oma = c( 1, 1, 1,1 ),mar=c(1.5,1.5,1.5,1.5))
+image.plot(log10(A.points))
 
 qplot(as.vector(Veg.thik),as.vector(ground),alpha=I(1/10))
 qplot(as.vector(Veg.thik),as.vector(my.snowdepth[,,1]),alpha=I(1/10),size = I(5),ylim=my.zlim,xlim=my.zlim)
@@ -259,13 +276,85 @@ ggsave("Tranch_3.pdf",plot=w3,scale=1,width=10,height=6,bg="transparent")
 # 
 
 
-Canopy <- A.stat$Max-A.stat$Min
-#Canopy[Canopy>1.5] <- NA
-image(Canopy)
-contour(Canopy,add=T)
-hist(Canopy,100)
+## To complete !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+my.surface <- abind(
+  A.stat$Min+(ground-A.stat$Min)-mean(A.stat$Min+(ground-A.stat$Min),na.rm=TRUE),
+  B.stat$Min+(ground-A.stat$Min)-mean(B.stat$Min+(ground-A.stat$Min),na.rm=TRUE),
+  C.stat$Min+(ground-A.stat$Min)-mean(C.stat$Min+(ground-A.stat$Min),na.rm=TRUE),
+  D.stat$Min+(ground-A.stat$Min)-mean(D.stat$Min+(ground-A.stat$Min),na.rm=TRUE),
+  E.stat$Min+(ground-A.stat$Min)-mean(E.stat$Min+(ground-A.stat$Min),na.rm=TRUE),
+  FF.stat$Min+(ground-A.stat$Min)-mean(FF.stat$Min+(ground-A.stat$Min),na.rm=TRUE),
+  G.stat$Min+(ground-A.stat$Min)-mean(G.stat$Min+(ground-A.stat$Min),na.rm=TRUE),
+  H.stat$Min+(ground-A.stat$Min)-mean(H.stat$Min+(ground-A.stat$Min),na.rm=TRUE),
+  along=3)
+
+par(mfrow=c(1,1),oma = c( 1, 1, 1,1 ),mar=c(1.5,1.5,1.5,1.5))
+bwr.colors <- colorRampPalette(c("blue","white","red"))
 
 
+
+  image.plot(my.surface[,,5] -my.surface[,,6],zlim=c(-0.1,0.1),col=bwr.colors(64))
+  image.plot(my.surface[,,5] -my.surface[,,7],zlim=c(-0.1,0.1),col=bwr.colors(64))
+image.plot(my.surface[,,6] -my.surface[,,7],zlim=c(-0.1,0.1),col=bwr.colors(64))
+plot((ground),my.surface[,,5] -my.surface[,,7],ylim=c(-0.5,0.5))
+
+my.diff <- abind(
+  my.surface[,,1] -my.surface[,,8],
+  my.surface[,,2] -my.surface[,,8],
+  my.surface[,,3] -my.surface[,,8],
+  my.surface[,,4] -my.surface[,,8],
+  my.surface[,,5] -my.surface[,,8],
+  my.surface[,,6] -my.surface[,,8],
+  my.surface[,,7]- my.surface[,,8],
+  along=3
+  )
+par(mfrow=c(3,3),oma = c( 1, 1, 1,1 ),mar=c(1.5,1.5,1.5,1.5))
+image.plot(image.smooth(my.surface[,,1]),zlim=c(-0.2,0.2),col=bwr.colors(64), main="Min surf 23 Sept")
+image.plot(image.smooth(my.surface[,,2]),zlim=c(-0.2,0.2),col=bwr.colors(64),main="Min surf 23 Oct")
+image.plot(image.smooth(my.surface[,,3]),zlim=c(-0.2,0.2),col=bwr.colors(64),main="Min surf 11 Nov")
+image.plot(image.smooth(my.surface[,,4]),zlim=c(-0.2,0.2),col=bwr.colors(64),main="Min surf 20 Dec")
+image.plot(image.smooth(my.surface[,,5]),zlim=c(-0.2,0.2),col=bwr.colors(64),main="Min surf 11 Jan")
+image.plot(image.smooth(my.surface[,,6]),zlim=c(-0.2,0.2),col=bwr.colors(64),main="Min surf 15 Feb")
+image.plot(image.smooth(my.surface[,,7]),zlim=c(-0.2,0.2),col=bwr.colors(64),main="Min surf 8 Mar")
+image.plot(image.smooth(my.surface[,,8]),zlim=c(-0.2,0.2),col=bwr.colors(64),main="Min surf 26 Mar")
+image.plot(image.smooth((Veg.thik)),zlim=c(0,1),col=grey(seq(from=0,to=1,by=1/64)), main="Veg thickness")
+
+par(mfrow=c(1,1),oma = c( 1, 1, 1,1 ),mar=c(1.5,1.5,1.5,1.5))
+a <- diff(image.smooth(my.surface[,,1]),my.surface[,,1])
+image.plot(image.smooth(my.surface[,,1])-my.surface[,,1],zlim=c(-0.2,0.2),col=bwr.colors(64), main="Min surf 23 Sept")
+
+
+
+hist(Veg.thik,breaks=100)
+image.plot(my.diff[,,7],zlim=c(-0.1,0.1),col=bwr.colors(64))
+
+
+par(mfrow=c(3,3),oma = c( 1, 1, 1,1 ),mar=c(1.5,1.5,1.5,1.5))
+image.plot((A.stat$Max-A.stat$Min),zlim=c(0,1),col=grey(seq(1, 0, length=64)), main="Cloud Thickness 23 Sept (m)")
+image.plot((B.stat$Max-B.stat$Min),zlim=c(0,1),col=grey(seq(1, 0, length=64)), main="Cloud Thickness 23 Oct (m)")
+image.plot((C.stat$Max-C.stat$Min),zlim=c(0,1),col=grey(seq(1, 0, length=64)), main="Cloud Thickness 11 Nov (m)")
+image.plot((D.stat$Max-D.stat$Min),zlim=c(0,1),col=grey(seq(1, 0, length=64)), main="Cloud Thickness 20 Dec (m)")
+image.plot((E.stat$Max-E.stat$Min),zlim=c(0,1),col=grey(seq(1, 0, length=64)), main="Cloud Thickness 11 Jan (m)")
+image.plot((FF.stat$Max-FF.stat$Min),zlim=c(0,1),col=grey(seq(1, 0, length=64)), main="Cloud Thickness 15 Feb (m)")
+image.plot((G.stat$Max-G.stat$Min),zlim=c(0,1),col=grey(seq(1, 0, length=64)), main="Cloud Thickness 8 Mar (m)")
+image.plot((H.stat$Max-H.stat$Min),zlim=c(0,1),col=grey(seq(1, 0, length=64)), main="Cloud Thickness 26 Mar (m)")
+
+par(mfrow=c(1,1),oma = c( 1, 1, 1,1 ),mar=c(1.5,4,1.5,1.5))
+boxplot(data.frame( Sept.23=as.vector(((A.stat$Max-A.stat$Min)+0.01)),
+        Oct.23=as.vector(((B.stat$Max-B.stat$Min)+0.01)),
+        Nov.11=as.vector(((C.stat$Max-C.stat$Min)+0.01)),
+        Dec.20=as.vector(((D.stat$Max-D.stat$Min)+0.01)),
+        Jan.11=as.vector(((E.stat$Max-E.stat$Min)+0.01)),
+        Fev.15=as.vector(((FF.stat$Max-FF.stat$Min)+0.01)),
+        Mar.8=as.vector(((G.stat$Max-G.stat$Min)+0.01)),
+        Mar.26=as.vector(((H.stat$Max-H.stat$Min)+0.01))), 
+        log="y", main="Thickness of point cloud",
+        ylab="Thickness (m)"
+        )
+
+
+hist(as.vector((log10(H.stat$Max-H.stat$Min))),breaks=100)
 
 
 

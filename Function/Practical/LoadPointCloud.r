@@ -4,7 +4,7 @@
 LoadPointCloud <- function(Trans,file){
   
   ifelse(missing(file),{my.file <- file.choose()},{my.file <- file})
-  print(file)
+  #print(file)
   # Load data into 3 column matrix
   raw.data <- read.table( my.file, quote="\"")
   my.data <- matrix(c(raw.data[,1],raw.data[,2],raw.data[,3]),ncol=3)
