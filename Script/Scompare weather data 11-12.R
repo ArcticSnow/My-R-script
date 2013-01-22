@@ -151,8 +151,8 @@ Wind <- data.frame(
 )
 
 
-p01 <- qplot(time,val,data=S.D,colour=Site,geom="line",
-            xlab="Time",ylab="Snow Depth (m)")
+p01 <- qplot(time,val*100,data=S.D,colour=Site,geom="line",
+            xlab="Time",ylab="Snow Depth (cm)")
 p02 <- qplot(time,val,data=Temp,colour=Site,geom="line",
              xlab="Time",ylab="Temperature (°C)")
 p03 <- qplot(time,val,data=Wind,colour=Site,geom="line",
@@ -311,13 +311,15 @@ h <- ggplot()+
   geom_point(aes(x=sfl$time,y=sfl$Fall/2+max(Temp$val+2,na.rm=T)),shape='*',size=(sfl$Fall)*7,
              colour=ifelse(sfl$Fall>=0,"blue","red"))+
   ylab("Temperature (°C)")+
-  theme(axis.title.x = element_blank())
+  theme(axis.title.x = element_blank())+
+  geom_vline(aes(xintercept=as.numeric(time)),data=LiDAR.time,linetype = "dotted", labels="LiDAR scanning")
  
 w <- ggplot()+
   geom_line(aes(x=Wind$time[Wind$Site=="Open shrubs site"],y=Wind$val[Wind$Site=="Open shrubs site"]))+
   ylab("Wind Speed (m/s)")+
   xlab("Time")+ scale_y_continuous(limits=c(-1.5, 12))+
-  geom_segment(aes(x=sfl$time,y=(sfl$Loading/6)-(sfl$Loading/6),yend=(sfl$Loading/6),xend=sfl$time),size=I(2))
+  geom_segment(aes(x=sfl$time,y=(sfl$Loading/6)-(sfl$Loading/6),yend=(sfl$Loading/6),xend=sfl$time),size=I(2))+
+  geom_vline(aes(xintercept=as.numeric(time)),data=LiDAR.time,linetype = "dotted", labels="LiDAR scanning")
 
 p01 <- qplot(time,val*100,data=S.D,colour=Site,geom="line",
             ylab="Snow Depth (cm)")+
