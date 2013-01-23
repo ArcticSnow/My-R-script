@@ -569,6 +569,32 @@ image.plot(image.smooth(my.surface[,,7]),zlim=c(-0.2,0.2),col=bwr.colors(64),mai
 image.plot(image.smooth(my.surface[,,8]),zlim=c(-0.2,0.2),col=bwr.colors(64),main="Snow surface 26 Mar")
 image.plot((A.stat$Max+(ground-A.stat$Min)-mean(A.stat$Max+(ground-A.stat$Min),na.rm=TRUE)),zlim=c(-0.6,1.5),col=bwr.colors(64),main="Canopy height")
 
+
+# test for MSE (Mean Square Error) surface comparison and RMSE (sqrt(MSE))
+Snow.surface.morpho <- abind(
+  (image.smooth(my.surface[,,1])$z-mean(as.vector(image.smooth(my.surface[,,1])$z),na.rm=TRUE))/sd(as.vector(image.smooth(my.surface[,,1])$z),na.rm=TRUE),
+  image.smooth(my.surface[,,1])$z,
+  image.smooth(my.surface[,,1])$z,
+  image.smooth(my.surface[,,1])$z,
+  image.smooth(my.surface[,,1])$z,
+  image.smooth(my.surface[,,1])$z,
+  image.smooth(my.surface[,,1])$z,
+  image.smooth(my.surface[,,1])$z,
+  ,along=3)
+
+par(mfrow=c(2,2),oma = c( 1, 1, 1,1 ),mar=c(1.5,1.5,1.5,1.5))
+
+.23Oct <- (my.surface[,,2]-mean(as.vector(my.surface[,,2]),na.rm=TRUE))/sd(as.vector(my.surface[,,2]),na.rm=TRUE)
+test.26Mar <- (my.surface[,,8]-mean(as.vector(my.surface[,,8]),na.rm=TRUE))/sd(as.vector(my.surface[,,8]),na.rm=TRUE)
+test.MSE <- (test.26Mar-test.23Oct)^2
+image.plot(test.23Oct,zlim=c(-3,3))
+image.plot(test.26Mar,zlim=c(-3,3))
+image.plot(test.MSE,zlim=c(0,8))
+sum(as.vector(test.26Mar-test.23Oct)^2,na.rm=TRUE)/length(as.vector(test.26Mar-test.23Oct))
+
+
+
+# plotting snow depth over time
 library(colorRamps)
 z.lim <- c(0,1)
 par(mfrow=c(3,3),oma = c( 1, 1, 1,1 ),mar=c(1.5,1.5,1.5,1.5))
