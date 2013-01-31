@@ -11,12 +11,14 @@ ifelse({Sys.info()['sysname']=="Windows"},{
   source("C:/Documents and Settings/sfilhol/My Documents/GitHub/My-R-script/Function/Practical/Basic_statmap_ptcloud.r")
   source("C:/Documents and Settings/sfilhol/My Documents/GitHub/My-R-script/Function/Practical/LoadPointCloud.r")
   source("C:/Documents and Settings/sfilhol/My Documents/GitHub/My-R-script/Function/Practical/Multiplot.r")
-},{
+  Data.path <- "G:/GlennCreek/Grd_LiDAR/Glenn_Creek1112/UTM/subselection_2/Clean"
+  },{
 setwd("/Volumes/SNOW BLUE/PhD/Research/SnowNet/Glenn Creek/Winter 11_12/Lidar Survey/UTM all/subselection_2/Clean")
  source("/Users/simonfilhol/github/local/My_R_script/Function/Practical/Basic_statmap_ptcloud.r")
  source("/Users/simonfilhol/github/local/My_R_script/Function/Practical/LoadPointCloud.r")
  source("/Users/simonfilhol/github/local/My_R_script/Function/Practical/Multiplot.R")
  source("/Users/simonfilhol/github/local/My_R_script/Function/FitPlane.R")
+Data.path <- "/Volumes/SNOW BLUE/PhD/Research/SnowNet/Glenn Creek/Winter 11_12/Lidar Survey/UTM all/subselection_2/Clean"
 })
 
 Data.prepare <- function(my.data,xlim,ylim,dx,dy,return.xyz){
@@ -46,54 +48,53 @@ Data.prepare <- function(my.data,xlim,ylim,dx,dy,return.xyz){
 # Boundary of area of interest (xlim,ylim), and resolution fo final product (dx,dy)
 xlim <-c(0,12.5)
 ylim <- c(0,12.5)
-dx <- 0.05
-dy <- 0.05
+dx <- 0.05   # in meter
+dy <- 0.05   # in meter
 
 # Load data for the 23 Sept (A.):
-my.data <- LoadPointCloud(file="/Volumes/SNOW BLUE/PhD/Research/SnowNet/Glenn Creek/Winter 11_12/Lidar Survey/UTM all/subselection_2/Clean/QT23sep_GCS.xyz")
+my.data <- LoadPointCloud(file=paste(Data.path,"/QT23sep_GCS.xyz",sep=""))
 A <- Data.prepare(my.data,xlim,ylim,dx,dy,return.xyz=TRUE)
 A.stat <- A$Stat
 A.trans <- A$Trans
 
-
 # Load data for the 23 Oct (B.):
-my.data <- LoadPointCloud(Trans=A.trans)
+my.data <- LoadPointCloud(Trans=A.trans,file=paste(Data.path,"/QT23oct_GCS.xyz",sep=""))
 B <- Data.prepare(my.data,xlim,ylim,dx,dy,return.xyz=TRUE)
 B.stat <- B$Stat
 B.trans <- B$Trans
 
 # Load data for the 11 Nov (C.):
-my.data <- LoadPointCloud(Trans=A.trans)
+my.data <- LoadPointCloud(Trans=A.trans,file=paste(Data.path,"/QT11nov_GCS.xyz",sep=""))
 C <- Data.prepare(my.data,xlim,ylim,dx,dy,return.xyz=TRUE)
 C.stat <- C$Stat
 C.trans <- C$Trans
 
 # Load data for the 20 Dec (D.):
-my.data <- LoadPointCloud(Trans=A.trans)
+my.data <- LoadPointCloud(Trans=A.trans,file=paste(Data.path,"/QT20dec_GCS.xyz",sep=""))
 D <- Data.prepare(my.data,xlim,ylim,dx,dy,return.xyz=TRUE)
 D.stat <- D$Stat
 D.trans <- D$Trans
 
 # Load data for the 11 Jan (E.):
-my.data <- LoadPointCloud(Trans=A.trans)
+my.data <- LoadPointCloud(Trans=A.trans,file=paste(Data.path,"/QT11jan_GCS.xyz",sep=""))
 E <- Data.prepare(my.data,xlim,ylim,dx,dy,return.xyz=TRUE)
 E.stat <- E$Stat
 E.trans <- E$Trans
 
 # Load data for the 15 Feb (FF.):
-my.data <- LoadPointCloud(Trans=A.trans)
+my.data <- LoadPointCloud(Trans=A.trans,file=paste(Data.path,"/QT15feb_GCS.xyz",sep=""))
 FF <- Data.prepare(my.data,xlim,ylim,dx,dy,return.xyz=TRUE)
 FF.stat <- FF$Stat
 FF.trans <- FF$Trans
 
 # Load data for the 8 Mar (G.):
-my.data <- LoadPointCloud(Trans=A.trans)
+my.data <- LoadPointCloud(Trans=A.trans,file=paste(Data.path,"/QT8mar_GCS.xyz",sep=""))
 G <- Data.prepare(my.data,xlim,ylim,dx,dy,return.xyz=TRUE)
 G.stat <- G$Stat
 G.trans <- G$Trans
 
 # Load data for the 26 Mar (H.):
-my.data <- LoadPointCloud(Trans=A.trans)
+my.data <- LoadPointCloud(Trans=A.trans,file=paste(Data.path,"/QT26mar_GCS.xyz",sep=""))
 H <- Data.prepare(my.data,xlim,ylim,dx,dy,return.xyz=TRUE)
 H.stat <- H$Stat
 H.trans <- H$Trans
@@ -568,30 +569,6 @@ image.plot(image.smooth(my.surface[,,6]),zlim=c(-0.2,0.2),col=bwr.colors(64),mai
 image.plot(image.smooth(my.surface[,,7]),zlim=c(-0.2,0.2),col=bwr.colors(64),main="Snow surface 8 Mar")
 image.plot(image.smooth(my.surface[,,8]),zlim=c(-0.2,0.2),col=bwr.colors(64),main="Snow surface 26 Mar")
 image.plot((A.stat$Max+(ground-A.stat$Min)-mean(A.stat$Max+(ground-A.stat$Min),na.rm=TRUE)),zlim=c(-0.6,1.5),col=bwr.colors(64),main="Canopy height")
-
-
-# test for MSE (Mean Square Error) surface comparison and RMSE (sqrt(MSE))
-Snow.surface.morpho <- abind(
-  (image.smooth(my.surface[,,1])$z-mean(as.vector(image.smooth(my.surface[,,1])$z),na.rm=TRUE))/sd(as.vector(image.smooth(my.surface[,,1])$z),na.rm=TRUE),
-  image.smooth(my.surface[,,1])$z,
-  image.smooth(my.surface[,,1])$z,
-  image.smooth(my.surface[,,1])$z,
-  image.smooth(my.surface[,,1])$z,
-  image.smooth(my.surface[,,1])$z,
-  image.smooth(my.surface[,,1])$z,
-  image.smooth(my.surface[,,1])$z,
-  ,along=3)
-
-par(mfrow=c(2,2),oma = c( 1, 1, 1,1 ),mar=c(1.5,1.5,1.5,1.5))
-
-.23Oct <- (my.surface[,,2]-mean(as.vector(my.surface[,,2]),na.rm=TRUE))/sd(as.vector(my.surface[,,2]),na.rm=TRUE)
-test.26Mar <- (my.surface[,,8]-mean(as.vector(my.surface[,,8]),na.rm=TRUE))/sd(as.vector(my.surface[,,8]),na.rm=TRUE)
-test.MSE <- (test.26Mar-test.23Oct)^2
-image.plot(test.23Oct,zlim=c(-3,3))
-image.plot(test.26Mar,zlim=c(-3,3))
-image.plot(test.MSE,zlim=c(0,8))
-sum(as.vector(test.26Mar-test.23Oct)^2,na.rm=TRUE)/length(as.vector(test.26Mar-test.23Oct))
-
 
 
 # plotting snow depth over time
