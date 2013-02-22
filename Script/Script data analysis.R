@@ -1,7 +1,9 @@
 
 setwd("F:/Phd/Course/Spatial Stat/Project")
 # Load Data and prepare for analysis
-Stat_project2 <- read.table("F:/Phd/Course/Statistic and data analysis/Project/Stat_project2.xyz", quote="\"")
+Stat_project2 <- read.table("F:/Phd/Course/Spatial Stat/Project/Stat_project2.xyz", quote="\"")
+source("C:/Documents and Settings/sfilhol/My Documents/GitHub/My-R-script/Function/ElemFunction/R/Elementary functions.r")
+source("C:/Documents and Settings/sfilhol/My Documents/GitHub/My-R-script/Function/Legend colorscale function.r")
 
 #Grd_Freq_krig(Stat_project2,Xlim=c(0,2),Ylim=(c(-12,-10)),dx=.1,dy=.1,my.krig.dxdy=.01)
 
@@ -12,8 +14,8 @@ Stat_project2 <- read.table("F:/Phd/Course/Statistic and data analysis/Project/S
 
 
 # Initial paramters
-Xlim <- c(0,2)
-Ylim <- c(-12,-10)
+Xlim <- c(0,5)
+Ylim <- c(-12,-8)
 dx <- .1
 dy <- .1
 my.krig.dxdy <- .01
@@ -21,6 +23,12 @@ my.krig.dxdy <- .01
 
 data <- matrix(c(Stat_project2[,1],Stat_project2[,2],Stat_project2[,3]),ncol=3)
 data <- Truncate_XY(data,Xlim,Ylim)
+
+
+a=.5
+plot(Truncate_XY(data,c(a,a+.1),Ylim)[,2],Truncate_XY(data,c(a,a+.1),Ylim)[,3],xlab='Distance (m)',ylab='Elevation (m)')
+
+
 
 #-------------------------------------------------
 # Data exploratory
