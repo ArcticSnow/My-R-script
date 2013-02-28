@@ -61,12 +61,15 @@ Basic.statmap.ptcloud <- function(data,dx,dy,Xlim,Ylim){
           z.std[k,m] <- sd(inter2,na.rm=T)
           z.quantile[k,m,] <- quantile(inter2,probs=c(0.025,0.5,0.975),na.rm=TRUE)
           inter2.5 <- inter1[ind2,]
-          inter3 <- {if(length(inter2.5)==3){inter2.5}else{inter2.5[inter2.5[,3]== z.max[k,m],]}}
-          inter4 <- {if(length(inter2.5)==3){inter2.5}else{inter2.5[inter2.5[,3]== z.min[k,m],]}}
-          z.pt.loc.min[n,] <- {if(length(inter3)==3){inter3}else{inter3[1,]}}
-          z.pt.loc.max[n,] <- {if(length(inter4)==3){inter4}else{inter4[1,]}}
-        },{
-          z.min[k,m] <- NA 
+          if (length(inter2.5)==3){
+          	z.pt.loc.min[n,] <-inter2.5
+          	z.pt.loc.max[n,] <-inter2.5
+          }
+          else{
+          	z.pt.loc.min[n,] <-inter2.5[inter2.5[,3]== z.min[k,m],]
+          	z.pt.loc.max[n,] <-inter2.5[inter2.5[,3]== z.max[k,m],]
+          }
+          },{
           z.density[k,m] <- NA
           z.min[k,m] <- NA
           z.max[k,m] <- NA
@@ -82,7 +85,6 @@ Basic.statmap.ptcloud <- function(data,dx,dy,Xlim,Ylim){
       }
       data <- data[!ind1, ]
     },{
-      z.min[k,] <- NA 
       z.density[k,] <- NA
       z.min[k,] <- NA
       z.max[k,] <- NA
