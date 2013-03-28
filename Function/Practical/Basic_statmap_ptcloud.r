@@ -49,9 +49,9 @@ Basic.statmap.ptcloud <- function(data,dx,dy,Xlim,Ylim){
     
     ifelse(length(ind1[ind1==T]>=1),{
       inter1 <- data[ind1,]
-      for(j in y.res){
+        for(j in y.res){
         ind2 <- (inter1[,2]>=j)&(inter1[,2]<(j+dy))
-        ifelse(length(ind2[ind2==T]>=1),{
+        ifelse(sum(ind2)>=1,{
           inter2 <- inter1[ind2,3]
         
           z.density[k,m] <- length(inter2)/(dx*dy)
@@ -60,14 +60,19 @@ Basic.statmap.ptcloud <- function(data,dx,dy,Xlim,Ylim){
           z.mean[k,m] <- mean(inter2,na.rm=T)
           z.std[k,m] <- sd(inter2,na.rm=T)
           z.quantile[k,m,] <- quantile(inter2,probs=c(0.025,0.5,0.975),na.rm=TRUE)
-          inter2.5 <- inter1[ind2,]
+          inter2.5 <- inter1[ind2,1:3]
+         
           if (length(inter2.5)==3){
           	z.pt.loc.min[n,] <-inter2.5
           	z.pt.loc.max[n,] <-inter2.5
           }
           else{
-          	z.pt.loc.min[n,] <-inter2.5[inter2.5[,3]== z.min[k,m],]
-          	z.pt.loc.max[n,] <-inter2.5[inter2.5[,3]== z.max[k,m],]
+            inter3 <- inter2.5[inter2.5[,3]== z.min[k,m],]
+            inter4 <- inter2.5[inter2.5[,3]== z.max[k,m],]
+            if(!is.null(dim(inter3))){inter3 <- inter3[1,]}
+            if(!is.null(dim(inter4))){inter4 <- inter4[1,]}
+          	z.pt.loc.min[n,] <- inter3
+          	z.pt.loc.max[n,] <-inter4
           }
           },{
           z.density[k,m] <- NA
@@ -100,7 +105,8 @@ Basic.statmap.ptcloud <- function(data,dx,dy,Xlim,Ylim){
   }
 print(Sys.time()-time)
 
-z.pt.loc.min <- z.pt.loc.min[!is.na(z.pt.loc.min[,3]),]  
+z.pt.loc.min <- z.pt.loc.min[!is.na(z.pt.loc.min[,3]),] 
+z.pt.loc.max <- z.pt.loc.max[!is.na(z.pt.loc.max[,3]),]  
   
 All <- list(coords=rbind(x.res+dx/2,y.res+dy/2),
             Density=z.density,

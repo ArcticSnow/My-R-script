@@ -101,14 +101,14 @@ H.trans <- H$Trans
 
 # Detrend ground surface ====
 A.dim <- dim(A.stat$Min)
-A <- data.frame(
+A.detrend <- data.frame(
  x=rep(A.stat$X,each=length(A.stat$X)),
  y=rep(A.stat$Y,A.dim[2]/length(A.stat$Y)),
  Min=as.vector(A.stat$Min))
-Bs <- FitPlane(cbind(A$x[!is.na(A$Min)],A$y[!is.na(A$Min)],A$Min[!is.na(A$Min)]))
+Bs <- FitPlane(cbind(A.detrend$x[!is.na(A.detrend$Min)],A.detrend$y[!is.na(A.detrend$Min)],A.detrend$Min[!is.na(A.detrend$Min)]))
 library(pracma)
-ground <- -(A$x*Bs[1]+A$y*Bs[2]+Bs[4]+A$Min*Bs[3])
-ground <- Reshape(ground,length(A.stat$X),length(A.stat$Y))
+ground.xyz <- -(A.detrend$x*Bs[1]+A.detrend$y*Bs[2]+Bs[4]+A.detrend$Min*Bs[3])
+ground <- Reshape(ground.xyz,length(A.stat$X),length(A.stat$Y))
 
 # Plot tranch of pointcloud ====
 # Plot 3 section of point cloud :
