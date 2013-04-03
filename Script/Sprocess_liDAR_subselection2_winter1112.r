@@ -21,28 +21,6 @@ setwd("/Volumes/SNOW BLUE/PhD/Research/SnowNet/Glenn Creek/Winter 11_12/Lidar Su
 Data.path <- "/Volumes/SNOW BLUE/PhD/Research/SnowNet/Glenn Creek/Winter 11_12/Lidar Survey/UTM all/subselection_2/Clean"
 })
 
-Data.prepare <- function(my.data,xlim,ylim,dx,dy,return.xyz){
-  xyz <- my.data$Data
-  translation <- my.data$Translation
-  rm(my.data)
-  
-  xyz <- xyz[xyz[,1]>=xlim[1] & xyz[,1] <=xlim[2],]
-  xyz <- xyz[xyz[,2]>=ylim[1] & xyz[,2] <=ylim[2],]
-  
-  stat <- Basic.statmap.ptcloud(xyz,dx,dy,xlim,ylim)
-  if(missing(return.xyz)){return.xyz=FALSE}
-  if(return.xyz==FALSE){
-    rm(xyz)
-    All <- list(Stat= stat,
-                Trans=translation)}
-  else{
-    All <- list(Stat= stat,
-                Trans=translation,
-                xyz=xyz)
-  }
-  return(All)
-}
-
 #
 #Loading and preparing data ====
 # Boundary of area of interest (xlim,ylim), and resolution fo final product (dx,dy)

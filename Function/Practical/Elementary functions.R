@@ -1,6 +1,9 @@
+# Compilation of uselful function for point cloud analysis
+# Simon Filhol
 
-#========================================================
-#========================================================
+
+
+# Point density function ========================================================
 # by Simon Filhol, 30 April 2012
 # last modification: 2May12
 # Function that generate a desnity map of a rectangle region
@@ -23,7 +26,7 @@ Point_Density <- function(data,dx,dy,Xlim,Ylim){
     m <- 1
     for(j in y.res){
       ind <- which((data[,1]>=i)&(data[,1]<(i+dx))&(data[,2]>=j)&(data[,2]<(j+dy)))
-      z.density[k,m] <- length(ind)/(dx*dy)
+      z.density[k,m] <- length(ind)/(dx*dy*10*10)
       m <- m+1
     } 
     k <- k+1
@@ -46,8 +49,7 @@ Point_Density <- function(data,dx,dy,Xlim,Ylim){
 ## Example:
 # Point_Density(myMat,20)
 
-#======================================================
-#======================================================
+# Truncate Function ======================================================
 # by Simon Filhol, 30 April 2012
 
 # Function to select a rectangle of data over X and Y
@@ -63,15 +65,6 @@ Truncate_XY <- function(my.data,Xlim,Ylim){
   Ylength <- Ylim[2]-Ylim[1]
   ind <- which((my.data[,1]>=Xmin) & (my.data[,1]<=Xmin+Xlength)&(my.data[,2]>=Ymin) & (my.data[,2]<=Ymin+Ylength))
   
-  
-  #   which <- rep(FALSE,times=dim(my.data)[1] )
-  #   for(i in 1:dim(my.data)[1] ){
-  #     if((my.data[i,1]>=Xmin) & (my.data[i,1]<=Xmin+Xlength)){
-  #       if((my.data[i,2]>=Ymin) & (my.data[i,2]<=Ymin+Ylength)){
-  #         which[i] <- TRUE
-  #       }
-  #     }
-  #   }
   
   return(My.sample <- my.data[ind,] )
   
@@ -103,14 +96,14 @@ Truncate_XY <- function(my.data,Xlim,Ylim){
 # # Select<- myMat[which,]
 # plot(Select[,1],Select[,2])
 
-#============================================================
-#============================================================
+# Subsampling function ============================================================
 # by Simon Filhol, 30 April 2012
 
 # function which subsample according to the technique indicated
 # data must be a n*3 matrix
 # dx and dy are scalar
 # technic can be "min", "max", or complete code with switch() statment.
+# cutoff disregards data in column if there are less point than the cutoff value.
 
 Subsample_pts <-  function(data,dx,dy,technic,cutoff){
   
@@ -178,7 +171,8 @@ Subsample_pts <-  function(data,dx,dy,technic,cutoff){
 # data <- matrix(runif(10*3), ncol=3)
 # smin <- Subsample_pts(data,.1,.1,"min")
 # plot(smin[,1],smin[,2])
-#==================================================================================
+
+# my.plot.results==================================================================================
 # by Margaret Short, adapted by Simon Filhol, 1st May 2012
 
 
@@ -216,8 +210,12 @@ my.plot.results <- function( my.lonlats,my.values,my.dxdy,str,Xlim,Ylim,leg.titl
 }
 }
 
+# Frequentist Kriging function ==================================================================================
+# Data.entry - is a XYZ list of points for kriging
+# Xlim - is a vector indicating the limit of the area of interest in the x-direction
+# Ylim - is a vector indicating the limit of the area of interest in the x-direction
+# my.krig.dxdy - is the resolution of the output product
 
-#==================================================================================
 
 Grd_Freq_krig <- function(data.entry,Xlim,Ylim,dx,dy,my.krig.dxdy){
   
@@ -228,11 +226,8 @@ Grd_Freq_krig <- function(data.entry,Xlim,Ylim,dx,dy,my.krig.dxdy){
   my.pt.density <- Point_Density(data,res,Xlim,Ylim)
   smin <- Subsample_pts(data,dx,dy,"min")
   plot(smin[,1],smin[,2])
+
   
-  
-  
-  
-  #-------------------------------------------------
   # Method 1: linear interpolation
   # Interpolqation using Akima package
   library(akima)
@@ -244,7 +239,6 @@ Grd_Freq_krig <- function(data.entry,Xlim,Ylim,dx,dy,my.krig.dxdy){
   image(my.interp,col=my.grays)
   contour(my.interp,add=TRUE,labcex=1.5)
   
-  #-------------------------------------------------
   # MEHTOD 2: frequentist Kriging
   library(geoR)
   
@@ -275,8 +269,7 @@ Grd_Freq_krig <- function(data.entry,Xlim,Ylim,dx,dy,my.krig.dxdy){
          c={
            c <- "gaussian"}
          )
-  
-  
+ 
   # covar.param <- readline("Choose ini.cov.pars, ex:c(partial sill, range): ")
   my.var.fit <- variofit(my.robust.vario,ini.cov.pars=c(0.005,0.025),cov.model=c,fix.nugget=FALSE,nugget=0.005,weights="equal",max.dist=1.5)
   lines(my.var.fit)
@@ -297,14 +290,196 @@ Grd_Freq_krig <- function(data.entry,Xlim,Ylim,dx,dy,my.krig.dxdy){
   my.results <- my.plot.results( my.grid,my.kr.pred, my.krig.dxdy,"Universal Kriging",Xlim=Xlim,Ylim=Ylim)
   
   All.resutls <- list(my.pt.density)
-  return(All.results)
-  
+  return(All.results) 
 }
 
+# Multiple plot function ====
 # 
-# ff <- function(a,b){
-#   
-#   c <- readline("yo")
-#   print(c)
-# }
+#
+# ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
+# - cols:   Number of columns in layout
+# - layout: A matrix specifying the layout. If present, 'cols' is ignored.
+#
+# If the layout is something like matrix(c(1,2,3,3), nrow=2, byrow=TRUE),
+# then plot 1 will go in the upper left, 2 will go in the upper right, and
+# 3 will go all the way across the bottom.
+#
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  require(grid)
+  
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+  
+  numPlots = length(plots)
+  
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                     ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+  
+  if (numPlots==1) {
+    print(plots[[1]])
+    
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+    
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+      
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
 
+# Fit Plane function ====
+
+FitPlane <- function(XYZ){
+  # fitplane function adapted from Matlab to R:  
+  
+  #    FITPLANE - solves coefficients of plane fitted to 3 or more points
+  #   
+  #    Usage:   B = fitplane(XYZ)
+  #   
+  #    Where:   XYZ - Npts*3 array of xyz coordinates to fit plane to.   
+  #                   If Npts is greater than 3 a least squares solution 
+  #                   is generated.
+  #   
+  #    Returns: Bs   - 4x1 array of plane coefficients in the form
+  #                   b(1)*X + b(2)*Y +b(3)*Z + b(4) = 0
+  #                   The magnitude of B is 1.
+  #                   To get gtound surface detrend, just estimate the 
+  #                   residuals which are equal to
+  #                   Residual = b(1)*X + b(2)*Y +b(3)*Z + b(4)
+  
+  dimen  <-  dim(XYZ)    
+  
+  if (dimen[2] !=3){
+    stop('data is not 3D')
+  }
+  
+  if (dimen[1] < 3){
+    stop('too few points to fit plane')
+  }
+  
+  # Set up constraint equations of the form  AB = 0,
+  # where B is a column vector of the plane coefficients
+  # in the form   b(1)*X + b(2)*Y +b(3)*Z + b(4) = 0.
+  
+  A  <-  cbind(XYZ, matrix(1,nrow=dimen[1] )) # Build constraint matrix
+  
+  ss <- svd(A)        # Singular value decomposition.
+  Bs  <-  ss$v[,4]       # Solution is last column of v.
+  return(Bs)             
+}
+
+# Load point cloud ====
+# Simon Filhol, 28 July 2012
+# Load point cloud files interactively, any 3 columns file like: .xyz or .txt file
+
+LoadPointCloud <- function(Trans,file){
+  
+  ifelse(missing(file),{my.file <- file.choose()},{my.file <- file})
+  #print(file)
+  # Load data into 3 column matrix
+  raw.data <- read.table( my.file, quote="\"")
+  my.data <- matrix(c(raw.data[,1],raw.data[,2],raw.data[,3]),ncol=3)
+  rm(raw.data)
+  my.data <- round(my.data,3)
+  
+  # Translate data to reduce memory use
+  
+  if(my.data[1,1]>500){
+    if(hasArg(Trans)){
+      my.trans.xyz <- Trans
+    }
+    else{
+      my.trans.xyz <- my.data[1,]
+    }
+    print(paste("Translation apply =",my.trans.xyz))
+    my.data <- cbind(my.data[,1]-my.trans.xyz[1], my.data[,2]-my.trans.xyz[2],my.data[,3]-my.trans.xyz[3])
+    my.info <- list(File=my.file,Translation=my.trans.xyz,Data= my.data)
+  }
+  else{
+    my.info <- list(File=my.file,Data= my.data) 
+  }
+  return(my.info)
+}
+
+# Multiplot function ====
+# Multiple plot function
+#
+# ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
+# - cols:   Number of columns in layout
+# - layout: A matrix specifying the layout. If present, 'cols' is ignored.
+#
+# If the layout is something like matrix(c(1,2,3,3), nrow=2, byrow=TRUE),
+# then plot 1 will go in the upper left, 2 will go in the upper right, and
+# 3 will go all the way across the bottom.
+#
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  require(grid)
+  
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+  
+  numPlots = length(plots)
+  
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                     ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+  
+  if (numPlots==1) {
+    print(plots[[1]])
+    
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+    
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+      
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+
+# Data Prepare function ====
+Data.prepare <- function(my.data,xlim,ylim,dx,dy,return.xyz){
+  xyz <- my.data$Data
+  translation <- my.data$Translation
+  rm(my.data)
+  
+  xyz <- xyz[xyz[,1]>=xlim[1] & xyz[,1] <=xlim[2],]
+  xyz <- xyz[xyz[,2]>=ylim[1] & xyz[,2] <=ylim[2],]
+  source("/Users/simonfilhol/github/local/My_R_script/Function/Practical/Basic_statmap_ptcloud.r")
+  stat <- Basic.statmap.ptcloud(xyz,dx,dy,xlim,ylim)
+  if(missing(return.xyz)){return.xyz=FALSE}
+  if(return.xyz==FALSE){
+    rm(xyz)
+    All <- list(Stat= stat,
+                Trans=translation)}
+  else{
+    All <- list(Stat= stat,
+                Trans=translation,
+                xyz=xyz)
+  }
+  return(All)
+}
