@@ -11,6 +11,8 @@ ifelse({Sys.info()['sysname']=="Windows"},{
   source("C:/Documents and Settings/sfilhol/My Documents/GitHub/My-R-script/Function/Practical/Basic_statmap_ptcloud.r")
   source("C:/Documents and Settings/sfilhol/My Documents/GitHub/My-R-script/Function/Practical/LoadPointCloud.r")
   source("C:/Documents and Settings/sfilhol/My Documents/GitHub/My-R-script/Function/Practical/Multiplot.r")
+  source("C:/Documents and Settings/sfilhol/My Documents/GitHub/My-R-script/Function/Practical/Elementary functions.r")
+  
   Data.path <- "G:/GlennCreek/Grd_LiDAR/Glenn_Creek1112/UTM/subselection_2/Clean"
   },{
 setwd("/Volumes/SNOW BLUE/PhD/Research/SnowNet/Glenn Creek/Winter 11_12/Lidar Survey/UTM all/subselection_2/Clean")
@@ -18,8 +20,11 @@ setwd("/Volumes/SNOW BLUE/PhD/Research/SnowNet/Glenn Creek/Winter 11_12/Lidar Su
  source("/Users/simonfilhol/github/local/My_R_script/Function/Practical/LoadPointCloud.r")
  source("/Users/simonfilhol/github/local/My_R_script/Function/Practical/Multiplot.R")
  source("/Users/simonfilhol/github/local/My_R_script/Function/FitPlane.R")
+source("/Users/simonfilhol/github/local/My_R_script/Function/Practical/Elementary_functions.r")
 Data.path <- "/Volumes/SNOW BLUE/PhD/Research/SnowNet/Glenn Creek/Winter 11_12/Lidar Survey/UTM all/subselection_2/Clean"
 })
+require(animation)
+require(akima)
 
 #
 #Loading and preparing data ====
@@ -28,6 +33,7 @@ xlim <-c(0,12.5)
 ylim <- c(0,12.5)
 dx <- 0.05   # in meter
 dy <- 0.05   # in meter
+my.dates <-c("23 Sept","23 Oct","11 Nov","20 Dec","11 Jan","15 Feb","8 Mar","26 Mar") 
 
 # Load data for the 23 Sept (A.):
 my.data <- LoadPointCloud(file=paste(Data.path,"/QT23sep_GCS.xyz",sep=""))
@@ -66,7 +72,7 @@ FF.stat <- FF$Stat
 FF.trans <- FF$Trans
 
 # Load data for the 8 Mar (G.):
-my.data <- LoadPointCloud(Trans=A.trans,file=paste(Data.path,"/QT8mar_GCS.xyz",sep=""))
+my.data <- LoadPointCloud(Trans=A.trans,file=paste(Data.path,"/QT08mar_GCS.xyz",sep=""))
 G <- Data.prepare(my.data,xlim,ylim,dx,dy,return.xyz=TRUE)
 G.stat <- G$Stat
 G.trans <- G$Trans
@@ -519,23 +525,35 @@ my.surface <- abind(
 par(mfrow=c(1,1),oma = c( 1, 1, 1,1 ),mar=c(1.5,1.5,1.5,1.5))
 bwr.colors <- colorRampPalette(c("blue","white","red"))
 
-
-
-image.plot(my.surface[,,5] -my.surface[,,6],zlim=c(-0.1,0.1),col=bwr.colors(64))
-image.plot(my.surface[,,5] -my.surface[,,7],zlim=c(-0.1,0.1),col=bwr.colors(64))
-image.plot(my.surface[,,6] -my.surface[,,7],zlim=c(-0.1,0.1),col=bwr.colors(64))
-plot((ground),my.surface[,,5] -my.surface[,,7],ylim=c(-0.5,0.5))
-
 my.diff <- abind(
-  my.surface[,,1] -my.surface[,,8],
-  my.surface[,,2] -my.surface[,,8],
-  my.surface[,,3] -my.surface[,,8],
-  my.surface[,,4] -my.surface[,,8],
-  my.surface[,,5] -my.surface[,,8],
-  my.surface[,,6] -my.surface[,,8],
-  my.surface[,,7]- my.surface[,,8],
+  B.stat$Min-A.stat$Min,
+  C.stat$Min-B.stat$Min,
+  D.stat$Min-C.stat$Min,
+  E.stat$Min-D.stat$Min,
+  FF.stat$Min-E.stat$Min,
+  G.stat$Min-FF.stat$Min,
+  H.stat$Min-G.stat$Min,
   along=3
 )
+
+# Normalize data.  (Zi - mean(Z))/sd(Z)
+my.diff.norm <- my.diff
+for(i in 1:7){
+  my.diff.norm[,,i] <- my.diff[,,i]-mean(as.vector(my.diff[,,i]),na.rm=TRUE)/sd(as.vector(my.diff[,,i]),na.rm=TRUE)
+}
+
+
+
+par(mfrow=c(2,3),oma = c( 1, 1, 1,1 ),mar=c(1.5,1.5,1.5,1.5))
+for (i in 2:7){
+image.plot(my.diff.norm[,,i],zlim=c(-.5,.5))
+}
+par(mfrow=c(2,3),oma = c( 1, 1, 1,1 ),mar=c(1.5,1.5,1.5,1.5))
+for (i in 2:7){
+  image.plot(my.diff[,,i]-mean(as.vector(my.diff[,,i]),na.rm=TRUE),col=bwr.colors(64),zlim=c(-.2,.2),main=paste("Snow Accumulation variability in (m),",my.dates[i] ))
+}
+
+# Plot maps of the snow surface evolution
 par(mfrow=c(3,3),oma = c( 1, 1, 1,1 ),mar=c(1.5,1.5,1.5,1.5))
 image.plot(ground,legend.only=T, legend.mar=0,col=bwr.colors(64), zlim=c(-0.4,0.4))
 image.plot(image.smooth(my.surface[,,1]),zlim=c(-0.2,0.2),col=bwr.colors(64), main="Ground surface 23 Sept")
@@ -547,6 +565,7 @@ image.plot(image.smooth(my.surface[,,6]),zlim=c(-0.2,0.2),col=bwr.colors(64),mai
 image.plot(image.smooth(my.surface[,,7]),zlim=c(-0.2,0.2),col=bwr.colors(64),main="Snow surface 8 Mar")
 image.plot(image.smooth(my.surface[,,8]),zlim=c(-0.2,0.2),col=bwr.colors(64),main="Snow surface 26 Mar")
 image.plot((A.stat$Max+(ground-A.stat$Min)-mean(A.stat$Max+(ground-A.stat$Min),na.rm=TRUE)),zlim=c(-0.6,1.5),col=bwr.colors(64),main="Canopy height")
+
 
 
 # plotting snow depth over time
@@ -562,29 +581,97 @@ image.plot(image.smooth(my.snowdepth[,,6]),zlim=z.lim,col=matlab.like(32),main="
 image.plot(image.smooth(my.snowdepth[,,7]),zlim=z.lim,col=matlab.like(32),main="Snow surface 8 Mar")
 image.plot((A.stat$Max+(ground-A.stat$Min)-mean(A.stat$Max+(ground-A.stat$Min),na.rm=TRUE)),zlim=c(-0.6,1.5),col=bwr.colors(64),main="Canopy height")
 
-
-
-
-
-par(mfrow=c(1,1),oma = c( 1, 1, 1,1 ),mar=c(1.5,1.5,1.5,1.5))
-a <- diff(image.smooth(my.surface[,,1]),my.surface[,,1])
-image.plot(image.smooth(my.surface[,,1])-my.surface[,,1],zlim=c(-0.2,0.2),col=bwr.colors(64), main="Min surf 23 Sept")
-
-
-
-hist(Veg.thik,breaks=100)
-image.plot(my.diff[,,7],zlim=c(-0.1,0.1),col=bwr.colors(64))
+4))
 
 # Plot Thickness of point cloud for each date
+Cloud.thick <- abind(
+  A.stat$Max-A.stat$Min,
+  B.stat$Max-B.stat$Min,
+  C.stat$Max-C.stat$Min,
+  D.stat$Max-D.stat$Min,
+  E.stat$Max-E.stat$Min,
+  FF.stat$Max-FF.stat$Min,
+  G.stat$Max-G.stat$Min,
+  H.stat$Max-H.stat$Min,
+  along=3
+)
 par(mfrow=c(3,3),oma = c( 1, 1, 1,1 ),mar=c(1.5,1.5,1.5,1.5))
-image.plot((A.stat$Max-A.stat$Min),zlim=c(0,1),col=grey(seq(1, 0, length=64)), main="Cloud Thickness 23 Sept (m)")
-image.plot((B.stat$Max-B.stat$Min),zlim=c(0,1),col=grey(seq(1, 0, length=64)), main="Cloud Thickness 23 Oct (m)")
-image.plot((C.stat$Max-C.stat$Min),zlim=c(0,1),col=grey(seq(1, 0, length=64)), main="Cloud Thickness 11 Nov (m)")
-image.plot((D.stat$Max-D.stat$Min),zlim=c(0,1),col=grey(seq(1, 0, length=64)), main="Cloud Thickness 20 Dec (m)")
-image.plot((E.stat$Max-E.stat$Min),zlim=c(0,1),col=grey(seq(1, 0, length=64)), main="Cloud Thickness 11 Jan (m)")
-image.plot((FF.stat$Max-FF.stat$Min),zlim=c(0,1),col=grey(seq(1, 0, length=64)), main="Cloud Thickness 15 Feb (m)")
-image.plot((G.stat$Max-G.stat$Min),zlim=c(0,1),col=grey(seq(1, 0, length=64)), main="Cloud Thickness 8 Mar (m)")
-image.plot((H.stat$Max-H.stat$Min),zlim=c(0,1),col=grey(seq(1, 0, length=64)), main="Cloud Thickness 26 Mar (m)")
+
+# Save graph in GIF movie
+saveGIF({
+  par(mfrow=c(1,1),oma = c( 1, 1, 1,1 ),mar=c(1.5,1.5,1.5,1.5))
+  x <- Cloud.thick[,,1]
+  y <- x
+  for(i in 1:size(x)[2]){
+  x[1:size(x)[1],i] <- seq(0,12.5,12.5/249)
+  y[i,1:size(x)[1]] <- seq(0,12.5,12.5/249)
+  }
+for(i in 1:8){
+  ind <- Cloud.thick[,,i]<=1 & !is.nan(Cloud.thick[,,i])
+  Cloud.thick[,,i] <- (Cloud.thick[,,i]-1)*ind+1 
+ 
+  image.plot(x,y,Cloud.thick[,,i],zlim=c(0,1),col=grey(seq(1, 0, length=64)),
+             legend.lab="Cloud Thickness (m)",cex.axis=1.5,
+             main=paste("- ",my.dates[i]," -"))
+}
+},movie.name="CloudThick.gif",interval=.5,ani.width=600,ani.height=600)
+
+saveGIF({
+  par(mfrow=c(1,1),oma = c( 1, 1, 1,1 ),mar=c(1.5,1.5,1.5,1.5))
+  x <- Cloud.thick[,,1]
+  y <- x
+  for(i in 1:size(x)[2]){
+    x[1:size(x)[1],i] <- seq(0,12.5,12.5/249)
+    y[i,1:size(x)[1]] <- seq(0,12.5,12.5/249)
+  }
+  for (i in 2:7){
+    Accu <- round(mean(as.vector(my.diff[,,i]),na.rm=TRUE)*100)
+    image.plot(x,y,my.diff[,,i]-mean(as.vector(my.diff[,,i]),na.rm=TRUE),
+               col=bwr.colors(64),zlim=c(-.2,.2),cex.axis=1.5,
+               main=paste(my.dates[i+1]," - ",my.dates[i], "/ Mean Snow Accumulation =",
+                          num2str(Accu,fmt=1),"cm"))
+  }
+},movie.name="SnowAccumulationVaribility.gif",interval=.5,ani.width=600,ani.height=600)
+
+my.surface <- abind(
+  A.stat$Min.interp+(my.ground$interp-A.stat$Min.interp)-mean(A.stat$Min.interp+(my.ground$interp-A.stat$Min.interp),na.rm=TRUE),
+  B.stat$Min.interp+(my.ground$interp-A.stat$Min.interp)-mean(B.stat$Min.interp+(my.ground$interp-A.stat$Min.interp),na.rm=TRUE),
+  C.stat$Min.interp+(my.ground$interp-A.stat$Min.interp)-mean(C.stat$Min.interp+(my.ground$interp-A.stat$Min.interp),na.rm=TRUE),
+  D.stat$Min.interp+(my.ground$interp-A.stat$Min.interp)-mean(D.stat$Min.interp+(my.ground$interp-A.stat$Min.interp),na.rm=TRUE),
+  E.stat$Min.interp+(my.ground$interp-A.stat$Min.interp)-mean(E.stat$Min.interp+(my.ground$interp-A.stat$Min.interp),na.rm=TRUE),
+  FF.stat$Min.interp+(my.ground$interp-A.stat$Min.interp)-mean(FF.stat$Min.interp+(my.ground$interp-A.stat$Min.interp),na.rm=TRUE),
+  G.stat$Min.interp+(my.ground$interp-A.stat$Min.interp)-mean(G.stat$Min.interp+(my.ground$interp-A.stat$Min.interp),na.rm=TRUE),
+  H.stat$Min.interp+(my.ground$interp-A.stat$Min.interp)-mean(H.stat$Min.interp+(my.ground$interp-A.stat$Min.interp),na.rm=TRUE),
+  along=3)
+
+saveGIF({
+  par(mfrow=c(1,1),oma = c( 1, 1, 1,1 ),mar=c(1.5,1.5,1.5,1.5))
+  x <- Cloud.thick[,,1]
+  y <- x
+  for(i in 1:size(x)[2]){
+    x[1:size(x)[1],i] <- seq(0,12.5,12.5/249)
+    y[i,1:size(x)[1]] <- seq(0,12.5,12.5/249)
+  }
+  
+  for (i in 1:8){
+    image.plot(x,y,my.surface[,,i],
+               col=bwr.colors(64),zlim=c(-.2,.2),cex.axis=1.5,
+               main=paste(" - ",my.dates[i], " -"))
+  }
+  
+},movie.name="SnowSurfaceMorpho.gif",interval=.5,ani.width=600,ani.height=600)
+
+
+
+
+
+
+
+
+
+
+
+
 
 # plot distribution of point cloud thickness as boxplot
 par(mfrow=c(1,1),oma = c( 1.5, 1.5, 1.5,1.5 ),mar=c(2,4.5,2,2))
@@ -599,6 +686,27 @@ boxplot(data.frame( Sept.23=as.vector(((A.stat$Max-A.stat$Min)+0.01)),
         log="y", main="Thickness of point cloud",
         ylab="Thickness (m)",cex.lab=1.5,cex.axis=1.5
 )
+
+Cloud.thick.stat <- matrix(0,ncol=8,nrow=3)
+for(i in 1:8){
+  Cloud.thick.stat[1,i] <- median(as.vector(Cloud.thick[,,i]),na.rm=TRUE)
+  Cloud.thick.stat[2,i] <- quantile(as.vector(Cloud.thick[,,i]),probs=.25,na.rm=TRUE)
+  Cloud.thick.stat[3,i] <- quantile(as.vector(Cloud.thick[,,i]),probs=.75,na.rm=TRUE)
+  
+}
+
+#Plot point cloud spread over time
+my.date <- c("2011/09/23","2011/10/23","2011/11/11","2011/12/20","2012/01/11","2012/02/15","2012/03/08","2012/03/26")
+Cloud.thick.df <- data.frame(Median=(Cloud.thick.stat[1,]),
+                             Quantile_25=(Cloud.thick.stat[2,]),
+                             Quantile_75=(Cloud.thick.stat[3,]),
+                             time=as.POSIXct(strptime(my.date,"%Y/%m/%d")))
+plot(Cloud.thick.df$time,Cloud.thick.df$Median,type='l', col="red")
+lines(Cloud.thick.df$time,Cloud.thick.df$Quantile_25,type='l',lty=2, col="blue")
+lines(Cloud.thick.df$time,Cloud.thick.df$Quantile_75,type='l',lty=2, col="blue")
+legend(mean(Cloud.thick.df$time),max(Cloud.thick.df$Median),
+       c("Median","25% Quantile","75% Quantile"),lty=c(1,2,2),col=c("red","blue","blue"))
+
 
 # Plot snow depth distribution as box plot
 par(mfrow=c(1,1),oma = c( 1, 1, 1,1 ),mar=c(2,4,2,1.5))
@@ -617,15 +725,16 @@ boxplot(data.frame(
 # Plot Canopy height vs final snow surface 
 par(mfrow=c(1,1),oma = c( 1, 1, 1,1 ),mar=c(4,4,1.5,1.5))
 a <- data.frame(
-  aa = as.vector(A.stat$Max+(ground-A.stat$Min)-mean(A.stat$Max+(ground-A.stat$Min),na.rm=TRUE)),
-  bb= as.vector(H.stat$Min+(ground-A.stat$Min)-mean(H.stat$Min+(ground-A.stat$Min),na.rm=TRUE)))
+  aa = as.vector(A.stat$Max+(ground-A.stat$Min)-mean(A.stat$Max+(ground-A.stat$Min)+.5,na.rm=TRUE)),
+  bb= as.vector(H.stat$Min+(ground-A.stat$Min)-mean(H.stat$Min+(ground-A.stat$Min),na.rm=TRUE)),
+  cc=as.vector(H.stat$Min-A.stat$Min))
  
 
 cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 qplot(x=a$aa,
       y=a$bb,
-      ylim=c(-0.2,0.2),xlim=c(-.5,2),
-      xlab="Canopy height (m)",
+      #ylim=c(-0.2,0.2),xlim=c(0,3),
+      xlab="Canopy thickness (m)",
       ylab="26 March snow surface variation (m)" , alpha=I(0.05))+
 theme(axis.text.x  = element_text(size=16),
       axis.text.y  = element_text(size=16),
