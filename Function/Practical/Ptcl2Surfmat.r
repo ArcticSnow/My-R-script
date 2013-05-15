@@ -16,46 +16,58 @@
 #                 directory. To change, use setwd() function. The output file will be a 2D matrix
 #  - DataInR <- TRUE or FALSE if need to return data in R
 
-Ptc2Surfmat <- function(file.path,Xlim,Ylim,dx,dy,Detrended,Detrend.matrix,Trans, Matname, DataInR){
+Ptc2Surfmat <- function(data,Xlim,Ylim,dx,dy,Detrended,Detrend.matrix, Matname, DataInR){
   
   # Required packages
   require(R.matlab)
   require(akima)
   
   # Load elementary funcions for point cloud
-  ifelse({Sys.info()['sysname']=="Windows"},{
-    source("C:/Documents and Settings/sfilhol/My Documents/GitHub/My-R-script/Function/Practical/Elementary functions.r")
-    source("C:/Documents and Settings/sfilhol/My Documents/GitHub/My-R-script/Function/Practical/Detrend.r")
-  },{
-    source("/Users/simonfilhol/github/local/My_R_script/Function/Practical/Elementary_functions.r")
-    source("/Users/simonfilhol/github/local/My_R_script/Function/Practical/Detrend.r")
-  })
-  
-  # PROBLEM WITH TRANS and cannnot call my.dat vefore it got loaded. REVIEW this frist section
-  
-  # Check input, and assign default value if variable not specified as function input
-  ifelse(missing(file.path),{my.file <- file.choose()},{my.file <- file.path})
-  if(hasArg(Trans)){my.trans.xyz <- Trans}
-  else{my.trans.xyz <- my.data[1,]}
+  R.git.dir <- function(){
+    if(Sys.info()['nodename']=="Simon-Filhols-MacBook-Pro.local")
+    {
+      my.R.git.dir <- '/Users/simonfilhol/github/local/My_R_script'
+    }else{
+      if(Sys.info()['nodename']=='LIDAR-PC'){
+        my.R.git.dir <- 'C:/Users/LiDAR/GitHub/My-R-script'
+      }else{
+        my.R.git.dir <- "C:/Documents and Settings/sfilhol/My Documents/GitHub/My-R-script"
+      }
+    }
+  }
+source(paste(R.git.dir(),"Function/Practical/Elementary_functions.r",sep="/"))
+source(paste(R.git.dir(),"Function/Practical/Detrend.r",sep="/"))
+
+  # Check input, and assign default value if variable not specified as function input 
   if(missing(DataInR)){DataInR=FALSE}
-  if(missing(Xlim)){Xlim <- c(min(my.data$Data[,1],na.rm=TRUE),max(my.data$Data[,1],na.rm=TRUE))}
-  if(missing(Ylim)){Ylim <- c(min(my.data$Data[,2],na.rm=TRUE),max(my.data$Data[,2],na.rm=TRUE))}
   if(missing(dx)){dx <- (Xlim[2]-Xlim[1])/250}
   if(missing(dy)){dy <- (Ylim[2]-Ylim[1])/250}
   if(Detrended==TRUE & missing(Detrend.matrix)){stop('Cannot have Detrended and Detrend.matrix at same time')}
-  
-  # Load data
-  data <- LoadPointCloud(Trans=Trans,file=my.file)
-  my.data <- Data.prepare(data,xlim,ylim,dx,dy,return.xyz=TRUE)
+  my.dx <- dx
+  my.dy <- dy
+  my.data <- Data.prepare(my.xyz=data,
+                          translation=c(0,0,0),
+                          xlim=Xlim,
+                          ylim=Ylim,
+                          dx=my.dx,
+                          dy=my.dy,
+                          return.xyz=TRUE)
   my.data.stat <- my.data$Stat
   my.data.trans <- my.data$Trans
-    my.data.stat$Min.interp<- interp(my.data.stat$Min.pt[,1],my.data.stat$Min.pt[,2],my.data.stat$Min.pt[,3],xo=my.data.stat$X,yo=my.data.stat$Y,duplicate='mean')$z
-  my.data.stat$Max.interp<- interp(my.data.stat$Max.pt[,1],my.data.stat$Max.pt[,2],my.data.stat$Max.pt[,3],xo=my.data.stat$X,yo=my.data.stat$Y,duplicate='mean')$z
+  rm(my.data)
   
-  if(Detrended==False){
+  
+  # something wrong with xo and yo. 
+  my.data.stat$Min.interp<- interp(my.data.stat$Min.pt[,1],my.data.stat$Min.pt[,2],my.data.stat$Min.pt[,3],xo=my.data.stat$Xcoord,yo=my.data.stat$Ycoord,duplicate='mean')$z
+  my.data.stat$Max.interp<- interp(my.data.stat$Max.pt[,1],my.data.stat$Max.pt[,2],my.data.stat$Max.pt[,3],xo=my.data.stat$Xcoord,yo=my.data.stat$Ycoord,duplicate='mean')$z
+  # need to use inter2xyz() instead of Map2xyz() in Detrended section
+    image(my.data.stat$Min.interp)
+  
+  if(Detrended==FALSE){
     Map.length <- (Xlim[2]-Xlim[1])/dx
     Map.height <- (Ylim[2]-Ylim[1])/dy
-    my.min.xyz <- Map2xyz(Map.Z=my.data.stat$Min.interp,X.vec=my.data.stat$X,Y.vec=my.data.stat$Y)
+    my.min.xyz <- Map2xyz(Map.Z=my.data.stat$Min.interp,dx=my.dx,dy=my.dy,Xlim=Xlim,Ylim=Ylim)
+    print(my.min.xyz[1:5,])
     my.ground <- Detrend(Gridded.XYZ=my.min.xyz,Map.output=TRUE,Map.size=c(Map.length,Map.height))
     Detrend.matrix <- my.ground-my.data.stat$Min.interp
   }

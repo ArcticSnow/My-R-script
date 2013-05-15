@@ -36,18 +36,29 @@ Map2xyz <- function(Map.Z,Map.X,Map.Y,dx,dy,Xlim,Ylim,X.vec,Y.vec){
   if(!missing(Map.X)& !missing(Map.Y)){
     my.xyz <- cbind(as.vector(Map.X),as.vector(Map.Y),as.vector(Map.Z))
   }
+   
   if(!missing(dx) & !missing(dy) & !missing(Xlim) & !missing(Ylim)){
+    my.dim <- dim(Map.Z)
+    X.vec <- seq(Xlim[1]+dx/2,Xlim[2],dx)
+    Y.vec <- seq(Ylim[1]+dx/2,Ylim[2],dy)
     
-    my.xyz <- cbind(rep(X.vec,each=length(X.vec)),
-                    rep(Y.vec,A.dim[2]/length(Y.vec)),
-                    as.vector(Map.Z))
-    
+    if(length(X.vec)!=my.dim[1] |length(Y.vec)!=my.dim[2] ){
+    	print("X.vec or Yvec do not have corresponding size with ipunt Z-Map")
+    }    
   }
-  if(!missing(X.vec)& !missing(Y.vec)){
-    my.xyz <- cbind(rep(X.vec,each=length(X.vec)),
-                    rep(Y.vec,A.dim[2]/length(Y.vec)),
+ if(!missing(X.vec)& !missing(Y.vec)){
+    my.xyz <- cbind(rep(X.vec,each=length(Y.vec)),
+                    rep(Y.vec,dim(Map.Z)[2]/length(X.vec)),
                     as.vector(Map.Z))
   }
+  if(!is.matrix(my.xyz)){
+  	print("Input parameter of Map2xyz are not correct")
+  	print(" Three possible way to go: 
+    - provide (Map.Z, Map.X, Map.Y)
+    - provide (Map.Z, dx, dy, Xlim, Ylim)
+    - provide (Map.Z, X.vec, Y.vec)")
+  }
+  if(dim(my.xyz)[2]!=3){stop('Map2xyz: Output matrix (my.xyz) is not 3 columns')}
   return(my.xyz)
 }
 

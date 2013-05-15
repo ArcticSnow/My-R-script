@@ -15,15 +15,15 @@
 
 Basic.statmap.ptcloud <- function(data,dx,dy,Xlim,Ylim){
   
-  if(Xlim[1]<min(data[,1]) | Xlim[2]>max(data[,1])  | Ylim[1]<min(data[,2])  | Ylim[2]>max(data[,2]) ){
-    stop("Limits are wider than actual data")
-  }
+   # if(Xlim[1]<min(data[,1]) | Xlim[2]>max(data[,1]) | Ylim[1]<min(data[,2])  | Ylim[2]>max(data[,2]) ){
+     # stop("Limits are wider than actual data")
+   # }
   
   
   data <- data[data[,1]>=Xlim[1] & data[,1] <=Xlim[2],]
   data <- data[data[,2]>=Ylim[1] & data[,2] <=Ylim[2],]
   
-  
+  print(dy)
   # Initialize 
   x.res <- seq(from=Xlim[1],to=Xlim[2]-dx,by=dx)
   y.res <- seq(from=Ylim[1],to=Ylim[2]-dy,by=dy)
@@ -108,7 +108,10 @@ print(Sys.time()-time)
 z.pt.loc.min <- z.pt.loc.min[!is.na(z.pt.loc.min[,3]),] 
 z.pt.loc.max <- z.pt.loc.max[!is.na(z.pt.loc.max[,3]),]  
   
-All <- list(coords=rbind(x.res+dx/2,y.res+dy/2),
+  
+  #will return All
+All <- list(X.coord=x.res+dx/2,    # need to verify if output for X.coord is right. Might need to run the function map2xyz here
+			Y.coord=y.res+dy/2,
             Density=z.density,
             Min=z.min,
             Max=z.max,
