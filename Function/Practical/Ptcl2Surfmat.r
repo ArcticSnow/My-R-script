@@ -16,11 +16,10 @@
 #                 directory. To change, use setwd() function. The output file will be a 2D matrix
 #  - DataInR <- TRUE or FALSE if need to return data in R
 
-Ptc2Surfmat <- function(data,Xlim,Ylim,dx,dy,Detrended,Detrend.matrix, Matname, DataInR){
+Ptc2Surfmat <- function(data,Xlim,Ylim,dx,dy,Detrended,Detrend.matrix, Matname, DataInR, XYZorTRI){
   
   # Required packages
   require(R.matlab)
-  require(akima)
   
   # Load elementary funcions for point cloud
   R.git.dir <- function(){
@@ -42,6 +41,7 @@ source(paste(R.git.dir(),"Function/Practical/Detrend.r",sep="/"))
   if(missing(DataInR)){DataInR=FALSE}
   if(missing(dx)){dx <- (Xlim[2]-Xlim[1])/250}
   if(missing(dy)){dy <- (Ylim[2]-Ylim[1])/250}
+  if(missing(XYZorTRI)){XYZorTRI <- "XYZ"}
   if(Detrended==TRUE & missing(Detrend.matrix)){stop('Cannot have Detrended and Detrend.matrix at same time')}
   my.dx <- dx
   my.dy <- dy
@@ -56,24 +56,25 @@ source(paste(R.git.dir(),"Function/Practical/Detrend.r",sep="/"))
   my.data.trans <- my.data$Trans
   rm(my.data)
   
-  
-  # something wrong with xo and yo. 
-  my.data.stat$Min.interp<- interp(my.data.stat$Min.pt[,1],my.data.stat$Min.pt[,2],my.data.stat$Min.pt[,3],xo=my.data.stat$Xcoord,yo=my.data.stat$Ycoord,duplicate='mean')$z
-  my.data.stat$Max.interp<- interp(my.data.stat$Max.pt[,1],my.data.stat$Max.pt[,2],my.data.stat$Max.pt[,3],xo=my.data.stat$Xcoord,yo=my.data.stat$Ycoord,duplicate='mean')$z
-  # need to use inter2xyz() instead of Map2xyz() in Detrended section
-    image(my.data.stat$Min.interp)
-  
+  if(XYZorTRI=="XYZ"){
+    require(akima)
+    Min.interp<- interp(my.data.stat$Min.pt[,1],my.data.stat$Min.pt[,2],my.data.stat$Min.pt[,3],xo=seq(Xlim[1]+dx/2,Xlim[2],dx),yo=seq(Ylim[1]+dy/2,Ylim[2],dy),duplicate='mean')
+    Max.interp<- interp(my.data.stat$Max.pt[,1],my.data.stat$Max.pt[,2],my.data.stat$Max.pt[,3],xo=seq(Xlim[1]+dx/2,Xlim[2],dx),yo=seq(Ylim[1]+dy/2,Ylim[2],dy),duplicate='mean')
+  }
+  else{
+    require(geometry)
+    Min.interp <- delaunayn(my.data.stat)
+  }
   if(Detrended==FALSE){
     Map.length <- (Xlim[2]-Xlim[1])/dx
     Map.height <- (Ylim[2]-Ylim[1])/dy
-    my.min.xyz <- Map2xyz(Map.Z=my.data.stat$Min.interp,dx=my.dx,dy=my.dy,Xlim=Xlim,Ylim=Ylim)
-    print(my.min.xyz[1:5,])
+    my.min.xyz <- interp2xyz(Min.interp,data.frame=TRUE)
+    print(my.min.xyz[1:10,])
     my.ground <- Detrend(Gridded.XYZ=my.min.xyz,Map.output=TRUE,Map.size=c(Map.length,Map.height))
-    Detrend.matrix <- my.ground-my.data.stat$Min.interp
+    Detrend.matrix <- my.ground-Min.interp$z
   }
-  
-  my.surface.min <- my.data.stat$Min.interp+Detrend.matrix
-  my.surface.max <- my.data.stat$Max.interp+Detrend.matrix
+  my.surface.min <- Min.interp$z+Detrend.matrix
+  my.surface.max <- Max.interp$z+Detrend.matrix
   
   # Save my.surface into a Matlab m-file ====
   Detrended <- TRUE   # are the data detrended? I/O
@@ -85,11 +86,12 @@ source(paste(R.git.dir(),"Function/Practical/Detrend.r",sep="/"))
   
   # Put data in list for return
   if(DataInR==TRUE){
-    Data.to.return <- list(my.data=my.data,
+    Data.to.return <- list(my.data.stat=my.data.stat,
+                           my.data.trans=my.data.trans,
                            my_surface_min=my.surface.min,
                            my_surface_max=my.surface.max,
                            # add any other surface of interest
-                           my.detrend.matrix=ground)
+                           my.detrend.matrix=my.ground)
     return(Data.to.return)
   }
 }
