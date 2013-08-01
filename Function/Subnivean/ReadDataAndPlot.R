@@ -44,5 +44,8 @@ plot.profile <- function(my.data,profile.nbs){
 
 Probe.offset <- 50  #cm
 my.data <- LoadSubnivean(50)
-plot.profile(my.data,c(1,3,5,6))
+plot.profile(my.data,1:5)
 
+Probe.offset <- 50  #cm
+my.data2 <- LoadSubnivean(50)
+plot.profile(my.data2,1:3)
